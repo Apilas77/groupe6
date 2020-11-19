@@ -30,15 +30,28 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "apps.casino",
 ]
+
+LOCAL_APPS = [
+    "apps.casino",
+    "apps.home",
+]
+
+DEV_APPS = [
+    "django_extensions",
+]
+
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
+
+if DEBUG:
+    INSTALLED_APPS += DEV_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -55,7 +68,7 @@ ROOT_URLCONF = 'groupe6.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ["groupe6/templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -106,6 +119,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+LANGUAGES = (
+    ("en-us", "English"),
+    ("fr", "French"),
+)
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -119,3 +137,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "groupe6/static"),
+]

@@ -1,10 +1,24 @@
 from random import randrange
-from retry import retry
-import select
-import sys
+from time import sleep
 import time
 import threading
+import sys
+import time
+import pickle
 
+def actu_sold(solde):
+    with open('fichier', 'rb') as fichier:
+        the_unpickle = pickle.Unpickler(fichier)
+        try:
+            tab_user = the_unpickle.load()
+            fichier.close()
+            tab_user[user_name]["solde"] = solde
+            with open('fichier', 'wb') as fichier:
+                the_pickle = pickle.Pickler(fichier)
+                the_pickle.dump(tab_user)
+                fichier.close()
+        except EOFError:
+            pass
 
 
 nb_coup=0
@@ -16,11 +30,35 @@ reussi1=0
 reussi2=0
 reussi3=0
 
+tab_user = {}
 
+user_name=input('Je suis Python. Quel est votre pseudo ?')
 
-user_name=input('Je suis Python. Quel est votre pseudo ?')#Definition pseudo
+tab_user[user_name] = {}
 
+try:
+    with open('fichier', 'rb') as fichier:
+        the_unpickle = pickle.Unpickler(fichier)
+        try:
+            tab_user = the_unpickle.load()
+            fichier.close()
+            if not user_name in tab_user:
+                tab_user[user_name] = {}
+                tab_user[user_name]["solde"] = 10
+            solde = tab_user[user_name]["solde"]
+            with open('fichier', 'wb') as fichier:
+                the_pickle = pickle.Pickler(fichier)
+                the_pickle.dump(tab_user)
+                fichier.close()
+        except EOFError:
+            pass
+except FileNotFoundError:
+    with open('fichier', 'wb') as fichier:
+        the_pickle = pickle.Pickler(fichier)
+        the_pickle.dump(tab_user)
+        fichier.close()
 
+  
 
 # Definition des règles
 print('Bienvenue ',user_name," Vous avez ",solde,"€" """\n
@@ -38,28 +76,13 @@ print('Bienvenue ',user_name," Vous avez ",solde,"€" """\n
 
 
 nb_ordi1=randrange(0,11,1)#L'ordinateur choisit au hasard un nombre entre 0 et 10
-nb_ordi2=randrange(0,21,1)#L'ordinateur choisit au hasard un nombre entre 0 et 20
-nb_ordi3=randrange(0,31,1)#L'ordinateur choisit au hasard un nombre entre 0 et 30
+nb_ordi2=randrange(0,21,1)
+nb_ordi3=randrange(0,31,1)
 
-"""def timer(t): #Ne fonctionne pas. Ancienne fonction timer
-    start = time.time()
-    print(start)
-    decompte = True
-    while decompte : 
-        if time.time() - start >= t:
-            print("Temps écoulé")
-            decompte = False
-        else:
-            pass"""
 
-"""def close(seconds):
-    time.sleep(seconds)
-    if time.sleep > 10 :
-        sys.exit()
-    else: 
-        pass"""
 
-mise = int(input("Rentrer votre mise. Maximum 10€, minimum 1€ :€" ))
+
+mise = int(input("Rentrer votre mise. Maximum : votre solde , minimum 1€ :€" ))
 
 while mise > solde or mise < 1 : #Définition de la mise
     print("Erreur")
@@ -70,15 +93,32 @@ while mise > solde or mise < 1 : #Définition de la mise
     elif mise < 1 : #Si la mise est trop petite alors on demande au joueur de rentrer une nouvelle valeur
         print("Votre mise est trop petite")
 
-    mise = int(input("Rentrer votre mise. Maximum 10€, minimum 1€ :€" ))
+    mise = int(input("Rentrer votre mise. Maximum : votre solde , minimum 1€ :€" ))
+
+def countdown():
+    global my_timer
+
+    my_timer = 15
+
+    for x in range(15):
+        my_timer = my_timer - 1
+        sleep(1)
+
+    if my_timer == 0:
+        print("\n Vous n'avez pas répondu dans les 15 secondes")
+
+countdown_thread = threading.Thread(target=countdown)
+countdown_thread.start()
 
 while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueur peut continuer à jouer
-    print(nb_ordi1)
-    nb_user=int(input("Entrer un nombre entre 0 et 10 : "))
-    """t = threading.Thread(target=close,args=(10,))
-    t.start()"""
+   
+    if my_timer == 0:
+        
+        pass
 
-    if nb_user != nb_ordi1 or nb_user == nb_ordi1:
+    nb_user=int(input("Entrer un nombre entre 0 et 10 : "))
+
+    if nb_user != nb_ordi1 or nb_user == nb_ordi1 or my_timer == 0:
         nb_total1 = nb_total1 + 1
     
     while nb_user > 10 or nb_user < 0: #Si le nombre donné par le joueur n'est pas compris entre 0 et 10, alors on demande au joueur d'entrer une
@@ -94,10 +134,9 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
         nb_user=int(input("Entrer un nombre entre 0 et 10 : "))
     
     nb_coup = nb_coup +1
+      
 
-   
-
-    if nb_coup == 3: #Si le joueur n'a pas trouvé le nombre au bout de 3 essais, alors il on se trouve dans 2 cas
+    if nb_coup == 3: #Si le joueur a mis 3 essais, alors il on se trouve dans 2 cas
 
         if nb_user == nb_ordi1: #Si le joueur a trouvé au bout du 3ème essais
             reussi1 = reussi1 + 1
@@ -113,6 +152,7 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
             print('Le nombre était ' , nb_ordi1)
             solde = solde - mise
             suite=int(input('Vous avez perdu. Voulez-vous essayer à nouveau (Oui = 1 / Non = 0) : '))
+            my_timer = 15
 
             if suite == 1:
                 nb_coup=0
@@ -126,13 +166,14 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
         
             if suite == 0: #Si le joueur ne veut pas rejouer alors le programme s'arrête
                 print('Votre nouveau solde est de : €', solde)
+                actu_sold(solde)
                 sys.exit()
         
 
-    if nb_user < nb_ordi1: #Si le nombre indiqué par le joueur est plus petit que celui de l'ordinateur
+    if nb_user < nb_ordi1 : #Si le nombre indiqué par le joueur est plus petit que celui de l'ordinateur
        print('Votre nombre est trop petit')
    
-    elif nb_user > nb_ordi1: #Si le nombre indiqué par le joueur est plus grand que celui de l'ordinateur
+    elif nb_user > nb_ordi1 : #Si le nombre indiqué par le joueur est plus grand que celui de l'ordinateur
        print('Votre nombre est trop grand') 
 
     elif nb_user == nb_ordi1: #Si le joueur gagne en 1 ou 2 essais
@@ -148,7 +189,7 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
 
         if nb_coup == 2:
             gain = mise - mise
-            solde = solde -mise + gain
+            solde = solde - mise + gain
             print(solde)
             print("Félicitation", user_name, "Vous avez gagné en {} coup(s)".format(nb_coup))
             niv2=int(input("""Vous pouvez passer au niveau 2. Si vous souhaiter vous continuer taper 1, \n
@@ -221,11 +262,9 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
                         
                         if suite2 == 0: #Si le joueur ne veut pas rejouer alors le programme s'arrête
                             print('Voici votre solde', solde)
+                            actu_sold(solde)
                             sys.exit()
 
-
-    
-                
 
                 if nb_user > nb_ordi2:
                     print("Le nombre est trop grand")
@@ -339,6 +378,7 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
 
                                     if suite3 == 0: #Si le joueur ne veut pas rejouer alors le programme s'arrête
                                         print('Votre nouveau solde est de : €', solde)
+                                        actu_sold(solde)
                                         sys.exit()
 
                             if nb_user > nb_ordi3:
@@ -348,7 +388,6 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
                                 print("Le nombre est trop petit")
 
                             if nb_user == nb_ordi3:
-                                reussi3 = reussi3 + 1
 
                                 if nb_coup == 1:
                                     gain = mise * 3
@@ -411,23 +450,21 @@ while nb_coup<3: #Tant que le nombre de coup est inférieur à 3, alors le joueu
 
                                 if niv3==0:
                                     print('Voici votre solde: €', solde)
-                                    nb_total3 = nb_total3 + nb_total2 + nb_total1
                                     print('Vous avez mis au total', nb_total3, 'essai(s)')
-                                    reussi3 = (reussi1 + reussi2 + reussi3) / (nb_total1 + nb_total2 + nb_total3)
-                                    print("Votre pourcentage de reussite est de : ", reussi3)
+                                    actu_sold(solde)
                                     sys.exit()
 
       
                     if niv3==0:
                         print('Voici votre solde: €', solde)
-
+                        actu_sold(solde)
                         sys.exit()
 
         if niv2==0:
             print("Votre nouveau solde est de", solde,"€.")
-            print('Vous avez mis au total', nb_total1, 'essai(s)')
-            reussi2=1 / (nb_total1 )
-            print("Votre pourcentage de reussite est de : ", reussi2)
+            print('Vous avez mis au total', nb_total2, 'essai(s)')
+            reussi2=1 * 100 / (reussi1)
+            actu_sold(solde)
             sys.exit()
 
     else :
@@ -442,5 +479,10 @@ if nb_user != nb_ordi1: #Que le joueur perde ou gagne, on indique la nombre qu'i
     print('Le nombre était ', nb_ordi1)
     nb_ordi1=int(nb_ordi1)
 
+
+
+
+
+   
 
 
